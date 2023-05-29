@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: director
+  labels:
+    app: director
+spec:
+  serviceAccountName: internal-deployer
+  containers:
+      - name: director-container
+        image: curlimages/curl:7.77.0
+        command: ["/bin/sh", "-c"]
+        args: 
+          # - nc -lp 8888 | while read line; do echo "message from director" | nc test-service.receiver.svc.cluster.local 8080 | nc -l -p 8888; done 
+          # - nc -lp 8888 | while read line; do curl http://test-service.receiver.svc.cluster.local:8080 | echo -e | nc -l -p 8888; done 
+          # - nc -k -lp 8888 -e curl http://test-service.receiver.svc.cluster.local:8080
+          - nc -k -lp 8888 -e curl http://test-service.default.svc.cluster.local:8080
+          # - nc -lp 8888 | while read line; do echo "message from director" | nc $(kubectl get pods --output=jsonpath='{range .items[*]}{.status.podIP}{"\t"}{"\n"}{end}'  | awk 'NR==2{print $1}') 8080 | nc -l -p 8888; done
+        ports:
+          - containerPort: 8888
+  nodeSelector:
+    kubernetes.io/hostname: minikube-m04 # Specify the name of the node we target for
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: director-service
+spec:
+  selector:
+    app: director
+  ports:
+    - protocol: TCP
+      name: director
+      port: 8888
+      targetPort: 8888
