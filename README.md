@@ -1,1 +1,16 @@
 # kubernetes_delegation
+## Create miniKube: 
+  1. Download: https://kubernetes.io/releases/download/
+  2. Create cluster with 3 nodes: `minikube start --nodes 3 --no-vtx-check` or `minikube node add` to add a new node
+
+## Deploy the pod
+`kubectl apply -f [YAML file name]`
+
+## Forward the local port to a pod’s port
+`kubectl port-forward service/<my-service <local port>:<Kubernetes port>`     
+For example: `kubectl port-forward pod/director 8080:8888` OR `kubectl port-forward service/director-service 8080:8888`
+
+## Some Useful Command:
+1. Check status: `minikube status` or `kubectl get all`
+2. Check service: `kubectl describe service [service name]`
+3. Check pod: `kubectl describe pod [pod name]`
