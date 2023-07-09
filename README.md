@@ -13,4 +13,6 @@ For example: `kubectl port-forward pod/director 8080:8888` OR `kubectl port-forw
 ## Some Useful Command:
 1. Check status: `minikube status` or `kubectl get all`
 2. Check service: `kubectl describe service [service name]`
-3. Check pod: `kubectl describe pod [pod name]`
+3. Check pod: `kubectl describe pod [pod name]` OR `kubectl get pods -o wide`
+4. Delete pod and restart a new one: `kubectl delete pod [pod name]`
+5. Delete deployment and delete related pods: `kubectl delete deployment [name]`
