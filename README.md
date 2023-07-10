@@ -11,8 +11,8 @@
 For example: `kubectl port-forward pod/director 8080:8888` OR `kubectl port-forward service/director-service 8080:8888`
 
 ## Add label to node
-Add label to node which is used to assign replica to a certain node: `kubectl label nodes <node name> node=<assign number>`
-Ex: "kubectl label nodes minikube-m02 node=2"
+Add label to node which is used to assign replica to a certain node: `kubectl label nodes <node name> node=<assign number>`     
+Ex: "kubectl label nodes minikube-m02 node=2"     
 Check label: `kubectl get nodes --show-labels`
 
 ## Some Useful Command:
@@ -21,3 +21,7 @@ Check label: `kubectl get nodes --show-labels`
 3. Check pod: `kubectl describe pod [pod name]` OR `kubectl get pods -o wide`
 4. Delete pod and restart a new one: `kubectl delete pod [pod name]`
 5. Delete deployment and delete related pods: `kubectl delete deployment [name]`
+
+---
+## Device Info
+Please run the getDeviceInfo.sh script, which will generate an output JSON file named output_device_info.json. This JSON file will contain detailed device information, including CPU, RAM, storage, and latency metrics.

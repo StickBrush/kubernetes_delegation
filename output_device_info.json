@@ -1,0 +1,14 @@
+{
+"minikube":{
+"cpu":"4", "ram":"7951.28", "storage":"59819.81", "latency":"{"
+},
+"minikube-m02":{
+"cpu":"4", "ram":"7951.28", "storage":"59819.81", "latency":"{"minikube-m03":"0.169"}"
+},
+"minikube-m03":{
+"cpu":"4", "ram":"7951.28", "storage":"59819.81", "latency":"{"minikube-m02":"0.102"}"
+},
+"minikube-m04":{
+"cpu":"4", "ram":"7951.28", "storage":"59819.81", "latency":"{"
+}
+}
