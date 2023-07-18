@@ -32,14 +32,9 @@ spec:
       containers:
           - name: m-service-container
             image: busybox:latest
-            # command: ["/bin/sh", "-c", "nc -lp 8080 | while read line; do echo 'Service 01 Received:' $line | nc -l -p 8080; done"]
             command: ["/bin/sh", "-c", "nc -k -lp 8080 -e echo 'HTTP/1.1 200 OK\nContent-Length:5\nContent-Type:text/plain\n\nHi01'"]
-            # command: ["/bin/sh", "-c", "nc -lp 8080 | while read line; do echo -e 'HTTP/1.1 200 OK\nContent-Length:5\nContent-Type:text/plain\n\nHi 1' | nc -l -p 8080; done"]
-            # command: ["/bin/sh", "-c", "nc -lp 8080 | while read line; do echo -e 'Hello' | nc -l -p 8080; done"]
             ports:
             - containerPort: 8080
-      # nodeSelector:
-      #   kubernetes.io/hostname: minikube-m02 # Specify the name of the node we target for
 
 ---
 apiVersion: v1
