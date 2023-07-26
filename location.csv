@@ -1,4 +1,7 @@
 ﻿IP Address,Latitude,Longitude
+kind-control-plane,40.7128,-74.006
+kind-control-plane2,34.0522,-118.2437
+kind-control-plane3,51.5074,-0.1278
 10.244.1.4,40.7128,-74.006
 10.244.3.5,34.0522,-118.2437
 10.244.2.5,51.5074,-0.1278

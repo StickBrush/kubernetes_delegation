@@ -1,16 +1,23 @@
 #!/bin/bash
 
 csv_file="location.csv"
+
 deg2rad() {
     local degrees="$1"
     local pi=$(echo "scale=10; 4*a(1)" | bc -l)
     local radians=$(echo "scale=10; $degrees * $pi / 180" | bc -l)
     echo "$radians"
 }
+get_owner() {
+    local nodeName="$1"
+    local owner_csv_file="owner.csv"
+    owner=$(awk -F',' -v value="$nodeName" '$1 == value {print $2}' "$owner_csv_file")
+    echo "$owner"
+}
 get_distance() {
     local myIp="$1"
     local otherIp="$2"
-
+    local csv_file="location.csv"
     # Extract the second and third columns of the matched row
     my_location=$(awk -F',' -v value="$myIp" '$1 == value {print $2, $3}' "$csv_file")
     other_location=$(awk -F',' -v value="$otherIp" '$1 == value {print $2, $3}' "$csv_file")
@@ -63,29 +70,34 @@ while IFS= read -r line; do
         name=$(echo "$line" | sed 's/^Name://' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') # remove leading and trailing whitespace  
         
         # latency
-        podsOfCurNode=$( kubectl get pods -l app=m-device-info --field-selector=spec.nodeName==$name --template='{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
-        ipOfCurNode=$( kubectl get pods -l app=m-device-info --field-selector=spec.nodeName==$name --template='{{range .items}}{{.status.podIP}}{{"\n"}}{{end}}')
-        podsOfOtherNode=$( kubectl get pods -l app=m-device-info --field-selector=spec.nodeName!=$name -o=jsonpath='{range .items[*]}{.status.podIP} {.metadata.name}{"\n"}{end}')
-        latency=""
-        location=""
-        if [ -n "$podsOfCurNode" ]; then
-            latency+="{"
-            location+="{"
+        podsOfCurNode=$( kubectl get pods  --field-selector=spec.nodeName==$name --template='{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+        ipOfCurNode=$( kubectl get pods --field-selector=spec.nodeName==$name --template='{{range .items}}{{.status.podIP}}{{"\n"}}{{end}}')
+        podsOfOtherNode=$( kubectl get pods --field-selector=spec.nodeName!=$name -o=jsonpath='{range .items[*]}{.status.podIP} {.metadata.name}{"\n"}{end}')
+        otherNodes=$(kubectl get nodes --field-selector metadata.name!=$name --template='{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+        latency="{"
+        location="{"
+        #owner
+        owner=$(get_owner $name)
+        if [ -n "$otherNodes" ]; then
+            while IFS= read -r otherNode; do
+                distance=$(get_distance "$name" "$otherNode")
+                location+="\"$otherNode\":$distance,"
+            done <<< "$otherNodes"
+            
+        fi
+        location=${location%,}
+        location+="}"
+        if [ -n "$podsOfCurNode" ]; then           
             while IFS= read -r otherPods; do
                 read -r otherPodsIP otherPodsName <<< "$otherPods"
                 otherNodeName=$(kubectl get pod "$otherPodsName" -o=jsonpath='{.spec.nodeName}')
                 latencyRaw=$(kubectl exec $podsOfCurNode -- sh -c "ping -c 5 $otherPodsIP")
                 latencyTemp=$(echo "$latencyRaw" | grep -E '^round-trip' | awk -F'/' '{print $(NF-1)}')
                 latency+="\"$otherNodeName\":\"$latencyTemp\","
-                #location
-                distance=$(get_distance "$ipOfCurNode" "$otherPodsIP")
-                location+="\"$otherNodeName\":\"$distance\","
             done <<< "$podsOfOtherNode"
-            latency=${latency%,}
-            location=${location%,}
-            latency+="}"
-            location+="}"
         fi
+        latency=${latency%,}
+        latency+="}"
     elif (( count % 4 == 1 )); then
         # cpu
         cpu=$(echo "$line" | sed 's/cpu://' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') # remove leading and trailing whitespace
@@ -98,7 +110,7 @@ while IFS= read -r line; do
         ram=$(echo "$line" | sed 's/memory://' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'  | sed -e 's/..$//') # remove last two character "Ki"
         ram=$(echo "scale=2; "$ram" / 1024" | bc) #convert Ki to MB
         # output
-        output+="\n\"$name\":{\n\"cpu\":\"$cpu\", \n\"ram\":\"$ram\", \n\"storage\":\"$storage\", \n\"latency\":\"$latency\",\n\"location\":\"$location\"\n},"
+        output+="\n\"$name\":{\n\"cpu\":$cpu, \n\"ram\":$ram, \n\"storage\":$storage, \n\"owner\":\"$owner\", \n\"latency\":$latency,\n\"location\":$location\n},"
     fi
     (( count++ ))
 done <<< "$node_info"
@@ -106,3 +118,5 @@ done <<< "$node_info"
 output=${output%,}  # Remove the trailing comma
 output+="\n}"
 echo -e "$output" > output_device_info.json
+
+python3 json2yaml.py
