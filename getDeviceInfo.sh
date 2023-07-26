@@ -92,8 +92,12 @@ while IFS= read -r line; do
                 read -r otherPodsIP otherPodsName <<< "$otherPods"
                 otherNodeName=$(kubectl get pod "$otherPodsName" -o=jsonpath='{.spec.nodeName}')
                 latencyRaw=$(kubectl exec $podsOfCurNode -- sh -c "ping -c 5 $otherPodsIP")
-                latencyTemp=$(echo "$latencyRaw" | grep -E '^round-trip' | awk -F'/' '{print $(NF-1)}')
-                latency+="\"$otherNodeName\":\"$latencyTemp\","
+                if [ $? == 0 ]; then
+                    latencyTemp=$(echo "$latencyRaw" | grep -E '^round-trip' | awk -F'/' '{print $(NF-1)}')
+                else
+                    latencyTemp=0
+                fi
+                latency+="\"$otherNodeName\":$latencyTemp,"
             done <<< "$podsOfOtherNode"
         fi
         latency=${latency%,}
